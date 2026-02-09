@@ -51,7 +51,43 @@ class MovieCard extends Component {
   // tra poco riempiremo questo stato alla fine della fase di montaggio con componentDidMount
 
   componentDidMount() {
+    // montaggio e fetch iniziale
     this.getMovieData()
+  }
+
+  // per fare in modo che il componente ri-lanci la funzione getMovieData ogni volta che cambia il film,
+  // avremmo bisogno di intervenire sulla sua fase di UPDATE (aggiornamento)
+  componentDidUpdate(prevProps, prevState) {
+    // componentDidUpdate è un metodo di React (dei componenti a classe) che viene automaticamente
+    // re-invocato OGNI VOLTA che cambia lo stato o che cambiano le props
+    console.log('COMPONENTDIDUPDATE')
+    // this.getMovieData()
+    // invocare this.getMovieData all'interno di componentDidUpdate provoca lo stesso loop infinito
+    // che avevamo quando lo mettevamo in render() (si svegliano sempre in coppia)
+
+    // la vera differenza tra componentDidUpdate e render è che il primo riceve 2 parametri:
+    // - prevProps è l'oggetto delle props PRIMA dell'aggiornamento appena avvenuto
+    // - prevState è l'oggetto dello state PRIMA dell'aggiornamento appena avvenuto
+    // prevProps sono le props precedenti (in contrapposizione con this.props che sono le props attuali)
+    // prevState è lo stato precedente (in contrapposizione con this.state che è lo stato attuale)
+
+    // se utilizzate un componentDidUpdate, DOVETE METTERCI DENTRO UN IF()
+
+    // a) cambio film nella tendina
+    // b) questo componente riceve una nuova prop -> movieTitle
+    // c) movieCard entra in una fase di update: si svegliano render e componentDidUpdate
+    // d) cosa vogliamo fare in componentDidUpdate? vorremmo ASCOLTARE questo cambio di prop e
+    // vorremmo ri-eseguire getMovieData()
+    // this.getMovieData() <-- perchè loop infinito? perchè componentDidUpdate si sveglia quando
+    // cambia la prop movieTitle, fa la fetch e poi fa un setState <- PROBLEMA
+    // con componentDidUpdate riusciremo a distinguere tra le due cause dell'aggiornamento: quando
+    // è avvenuto per un cambio di prop e quando invece è avvenuto per un cambio di state
+    // quindi utilizziamo prevProps e prevState per eseguire la fetch solo quando è cambiata props.movieTitle
+    if (prevProps.movieTitle !== this.props.movieTitle) {
+      this.getMovieData()
+      // fai di nuovo la fetch SOLO quando questo aggiornamento è stato causato da un cambio della prop movieTitle
+      // il mio IF torna FALSE quando l'update viene azionato dal setState dentro la fetch
+    }
   }
 
   // CATENA DEGLI EVENTI
@@ -64,6 +100,8 @@ class MovieCard extends Component {
 
   render() {
     console.log('RENDER') // quante volte vedrò il console.log nel browser?
+    // un componente lancia nuovamente render() ogni volta che cambia il suo stato o che gli
+    // cambiano le props
 
     return (
       // loading ed error rispecchiano lo stato della Promise: finchè loading è true
@@ -97,6 +135,8 @@ class MovieCard extends Component {
 
 export default MovieCard
 
+// ---------------
+// TRUTHY/FALSY
 // const x = null
 
 // if (500) {
@@ -110,5 +150,10 @@ export default MovieCard
 // 0
 // -0
 // ''
-
 // TUTTI GLI ALTRI SONO TRUTHY
+// ---------------
+
+// COMPONENT LIFECYCLE
+// 1) render
+// 2) componentDidMount
+// 3) render + componentDidUpdate ad ogni update (cambio di state o di props)
